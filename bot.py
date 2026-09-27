@@ -10,25 +10,24 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFil
 # ==================== CONFIGURATION ====================
 BOT_TOKEN = "8772775679:AAFNhAS8fAflvpa6qk0hQQ0GHXmGAfNkr6E"
 
-# Fallback Banner Image (Agar banner.jpg upload na ho)
-DEFAULT_PHOTO_URL = "https://i.postimg.cc/cLGk97Zw/YONO-LOOT-640x360.png"
+DEFAULT_PHOTO_URL = "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800"
 
-# --- STEP 1: TOP 4 CHANNELS (2x2 Grid) ---
+# --- STEP 1: TOP 4 CHANNELS (With Exact IDs) ---
 TOP_4_CHANNELS = [
-    {"name": "📢 Join 1 ↗️", "url": "https://t.me/+miAnzdPVlNA5M2U1"},
-    {"name": "📢 Join 2 ↗️", "url": "https://t.me/+cSAjB1XCsN40MzY1"},
-    {"name": "📢 Join 3 ↗️", "url": "https://t.me/+XMExpGdJ06hjMmZl"},
-    {"name": "📢 Join 4 ↗️", "url": "https://t.me/+t7dCpQb5p0U2MWJl"}
+    {"name": "📢 Join 1 ↗️", "url": "https://t.me/+miAnzdPVlNA5M2U1", "id": -1004447397342},
+    {"name": "📢 Join 2 ↗️", "url": "https://t.me/+cSAjB1XCsN40MzY1", "id": -1003759197616},
+    {"name": "📢 Join 3 ↗️", "url": "https://t.me/+XMExpGdJ06hjMmZl", "id": -1003965694341},
+    {"name": "📢 Join 4 ↗️", "url": "https://t.me/+t7dCpQb5p0U2MWJl", "id": -1002107968004}
 ]
 
-# --- STEP 2: REMAINING CHANNELS (5, 6, 7) ---
+# --- STEP 2: REMAINING CHANNELS (With Exact IDs) ---
 REMAINING_CHANNELS = [
-    {"name": "📢 Channel 5 ↗️", "url": "https://t.me/SaahoTricks", "id": "@SaahoTricks"},
-    {"name": "📢 Channel 6 ↗️", "url": "https://t.me/code91areas", "id": "@code91areas"},
-    {"name": "📢 Channel 7 ↗️", "url": "https://t.me/+evlayNwyI_EzOWM1", "id": None}
+    {"name": "📢 Channel 5 ↗️", "url": "https://t.me/SaahoTricks", "id": -1002907609430},
+    {"name": "📢 Channel 6 ↗️", "url": "https://t.me/code91areas", "id": -1002072638055},
+    {"name": "📢 Channel 7 ↗️", "url": "https://t.me/+evlayNwyI_EzOWM1", "id": -1002175836786}
 ]
 
-# --- 8TH LINK (FINAL VOUCHER CLAIM REQUEST LINK) ---
+# --- FINAL 8TH LINK (Destination Voucher Link) ---
 FINAL_8TH_LINK = "https://t.me/+_hlE6fwQ0nJiZjdl"
 
 # =======================================================
@@ -36,6 +35,38 @@ FINAL_8TH_LINK = "https://t.me/+_hlE6fwQ0nJiZjdl"
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
+
+# Pending Join Requests ko track karne ke liye
+user_requests = {}
+
+# --- JOIN REQUEST LISTENER (Agar banda request dale toh detect kare) ---
+@dp.chat_join_request()
+async def handle_join_request(event: types.ChatJoinRequest):
+    user_id = event.from_user.id
+    chat_id = event.chat.id
+    if user_id not in user_requests:
+        user_requests[user_id] = set()
+    user_requests[user_id].add(chat_id)
+    logging.info(f"Join Request Detected: User {user_id} in Chat {chat_id}")
+
+# --- STRICT VERIFICATION FUNCTION ---
+async def check_user_joined(user_id: int, chat_id: int) -> bool:
+    if not chat_id:
+        return True
+
+    # 1. Check karo agar Join Request bheji hui hai
+    if user_id in user_requests and chat_id in user_requests[user_id]:
+        return True
+
+    # 2. Check karo agar already Member / Admin hai
+    try:
+        member = await bot.get_chat_member(chat_id=chat_id, user_id=user_id)
+        if member.status in ["member", "administrator", "creator", "restricted"]:
+            return True
+    except Exception as e:
+        logging.error(f"Error checking {chat_id}: {e}")
+
+    return False
 
 # --- 2x2 GRID KEYBOARDS ---
 
@@ -107,15 +138,31 @@ async def cmd_start(message: types.Message):
     )
     await send_welcome_photo(message.chat.id, caption, get_step1_keyboard())
 
-# --- STEP 2 HANDLER ---
+# --- STEP 2 HANDLER (STRICT VERIFICATION FOR TOP 4) ---
 @dp.callback_query(F.data == "goto_step2")
 async def process_step2(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    not_joined = []
+
+    for ch in TOP_4_CHANNELS:
+        is_joined = await check_user_joined(user_id, ch["id"])
+        if not is_joined:
+            not_joined.append(ch["name"])
+
+    # Agar banda join/request nahi kiya:
+    if not_joined:
+        await callback.answer(
+            f"❌ Access Denied!\nAapne {len(not_joined)} channels join/request nahi kiye.\nPehle upar ke 4 channels join karein!",
+            show_alert=True
+        )
+        return
+
     await callback.answer("✅ Step 1 Verified!")
     
     step2_caption = (
         "🔥 **STEP 1 COMPLETED (4/4 CHANNELS JOINED)!**\n\n"
         "⏳ **Aapka Voucher 90% Unlock Ho Chuka Hai.**\n\n"
-        "Sirf aakhri kuch channels bache hain! Niche join/request daal kar turant apna **Voucher & Promo Code** claim karein:\n\n"
+        "Sirf aakhri 3 channels bache hain! Niche join/request daal kar turant apna **Voucher & Promo Code** claim karein:\n\n"
         "👇 *Niche diye gaye channels join karein:*"
     )
 
@@ -132,38 +179,33 @@ async def process_step2(callback: types.CallbackQuery):
             parse_mode="Markdown"
         )
 
-# --- FINAL VOUCHER CLAIM HANDLER (PURANA MSG DELETE + NAYA FRESH MSG) ---
+# --- FINAL CLAIM HANDLER (STRICT VERIFICATION FOR 5, 6, 7) ---
 @dp.callback_query(F.data == "claim_voucher")
 async def process_claim(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     not_joined = []
 
-    # Check public channels 5 & 6
     for ch in REMAINING_CHANNELS:
-        if ch.get("id"):
-            try:
-                member = await bot.get_chat_member(chat_id=ch["id"], user_id=user_id)
-                if member.status in ["left", "kicked"]:
-                    not_joined.append(ch["name"])
-            except Exception as e:
-                logging.error(f"Check error for {ch['id']}: {e}")
+        is_joined = await check_user_joined(user_id, ch["id"])
+        if not is_joined:
+            not_joined.append(ch["name"])
 
     if not_joined:
         await callback.answer(
-            f"⚠️ Pehle Channel 5 & 6 join karein tabhi voucher unlock hoga!",
+            f"❌ Access Denied!\nPehle Step 2 ke baki channels join/request karein!",
             show_alert=True
         )
         return
 
     await callback.answer("🎉 Verification Successful!")
 
-    # 1. Purana photo wala message delete karo
+    # Purana lamba message delete
     try:
         await callback.message.delete()
-    except Exception as e:
-        logging.error(f"Message delete error: {e}")
+    except Exception:
+        pass
 
-    # 2. Naya fresh message bhejo bina kisi fake code ke
+    # Naya fresh message with intense FOMO
     reward_text = (
         "🎁 **HERE IS YOUR VOUCHER & PROMO CODE!** 🎁\n\n"
         "⚡ **Official VIP Promo Code & Free Cash Voucher agle 10 MINUTES me niche diye gaye VIP Channel me drop hone wala hai!**\n\n"
