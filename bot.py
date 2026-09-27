@@ -10,7 +10,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFil
 # ==================== CONFIGURATION ====================
 BOT_TOKEN = "8772775679:AAFNhAS8fAflvpa6qk0hQQ0GHXmGAfNkr6E"
 
-DEFAULT_PHOTO_URL = "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800"
+DEFAULT_PHOTO_URL = "https://i.postimg.cc/cLGk97Zw/YONO-LOOT-640x360.png"
 
 # --- STEP 1: TOP 4 CHANNELS (With Exact IDs) ---
 TOP_4_CHANNELS = [
