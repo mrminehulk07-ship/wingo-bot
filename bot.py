@@ -12,22 +12,23 @@ BOT_TOKEN = "8772775679:AAFNhAS8fAflvpa6qk0hQQ0GHXmGAfNkr6E"
 
 DEFAULT_PHOTO_URL = "https://i.postimg.cc/cLGk97Zw/YONO-LOOT-640x360.png"
 
-# --- STEP 1: TOP 4 CHANNELS (With Exact IDs) ---
-TOP_4_CHANNELS = [
+# --- STEP 1: TOP 5 CHANNELS (With Exact IDs) ---
+TOP_5_CHANNELS = [
     {"name": "📢 Join 1 ↗️", "url": "https://t.me/+miAnzdPVlNA5M2U1", "id": -1004447397342},
     {"name": "📢 Join 2 ↗️", "url": "https://t.me/+cSAjB1XCsN40MzY1", "id": -1003759197616},
     {"name": "📢 Join 3 ↗️", "url": "https://t.me/+XMExpGdJ06hjMmZl", "id": -1003965694341},
-    {"name": "📢 Join 4 ↗️", "url": "https://t.me/+t7dCpQb5p0U2MWJl", "id": -1002107968004}
+    {"name": "📢 Join 4 ↗️", "url": "https://t.me/+t7dCpQb5p0U2MWJl", "id": -1002107968004},
+    {"name": "📢 Join 5 ↗️", "url": "https://t.me/THENEXALOOTSANDCODES", "id": -1004368860999}
 ]
 
 # --- STEP 2: REMAINING CHANNELS (With Exact IDs) ---
 REMAINING_CHANNELS = [
-    {"name": "📢 Channel 5 ↗️", "url": "https://t.me/SaahoTricks", "id": -1002907609430},
-    {"name": "📢 Channel 6 ↗️", "url": "https://t.me/code91areas", "id": -1002072638055},
-    {"name": "📢 Channel 7 ↗️", "url": "https://t.me/+evlayNwyI_EzOWM1", "id": -1002175836786}
+    {"name": "📢 Channel 6 ↗️", "url": "https://t.me/SaahoTricks", "id": -1002907609430},
+    {"name": "📢 Channel 7 ↗️", "url": "https://t.me/code91areas", "id": -1002072638055},
+    {"name": "📢 Channel 8 ↗️", "url": "https://t.me/+evlayNwyI_EzOWM1", "id": -1002175836786}
 ]
 
-# --- FINAL 8TH LINK (Destination Voucher Link) ---
+# --- FINAL DESTINATION LINK (Voucher Request Link) ---
 FINAL_8TH_LINK = "https://t.me/+_hlE6fwQ0nJiZjdl"
 
 # =======================================================
@@ -39,7 +40,7 @@ dp = Dispatcher(storage=MemoryStorage())
 # Pending Join Requests ko track karne ke liye
 user_requests = {}
 
-# --- JOIN REQUEST LISTENER (Agar banda request dale toh detect kare) ---
+# --- JOIN REQUEST LISTENER ---
 @dp.chat_join_request()
 async def handle_join_request(event: types.ChatJoinRequest):
     user_id = event.from_user.id
@@ -68,17 +69,20 @@ async def check_user_joined(user_id: int, chat_id: int) -> bool:
 
     return False
 
-# --- 2x2 GRID KEYBOARDS ---
+# --- KEYBOARDS ---
 
 def get_step1_keyboard():
     keyboard = [
         [
-            InlineKeyboardButton(text=TOP_4_CHANNELS[0]["name"], url=TOP_4_CHANNELS[0]["url"]),
-            InlineKeyboardButton(text=TOP_4_CHANNELS[1]["name"], url=TOP_4_CHANNELS[1]["url"])
+            InlineKeyboardButton(text=TOP_5_CHANNELS[0]["name"], url=TOP_5_CHANNELS[0]["url"]),
+            InlineKeyboardButton(text=TOP_5_CHANNELS[1]["name"], url=TOP_5_CHANNELS[1]["url"])
         ],
         [
-            InlineKeyboardButton(text=TOP_4_CHANNELS[2]["name"], url=TOP_4_CHANNELS[2]["url"]),
-            InlineKeyboardButton(text=TOP_4_CHANNELS[3]["name"], url=TOP_4_CHANNELS[3]["url"])
+            InlineKeyboardButton(text=TOP_5_CHANNELS[2]["name"], url=TOP_5_CHANNELS[2]["url"]),
+            InlineKeyboardButton(text=TOP_5_CHANNELS[3]["name"], url=TOP_5_CHANNELS[3]["url"])
+        ],
+        [
+            InlineKeyboardButton(text=TOP_5_CHANNELS[4]["name"], url=TOP_5_CHANNELS[4]["url"])
         ],
         [
             InlineKeyboardButton(text="🔓 Continue To Step 2 🔓", callback_data="goto_step2")
@@ -116,8 +120,7 @@ async def send_welcome_photo(chat_id, caption, reply_markup):
             reply_markup=reply_markup,
             parse_mode="Markdown"
         )
-    except Exception as e:
-        logging.error(f"Photo send error: {e}")
+    except Exception:
         await bot.send_message(
             chat_id=chat_id,
             text=caption,
@@ -134,17 +137,17 @@ async def cmd_start(message: types.Message):
         "🤑 **Per Account ( ₹100 - ₹500 Free )**\n"
         "🎰 **Game:** All Yono & Slots Official Vouchers\n"
         "⚡ **Status:** Active & Verified ✅\n\n"
-        "👇 *Step 1: Niche diye gaye 4 Channels me join/request daalein:*"
+        "👇 *Step 1: Niche diye gaye 5 Channels me join/request daalein:*"
     )
     await send_welcome_photo(message.chat.id, caption, get_step1_keyboard())
 
-# --- STEP 2 HANDLER (STRICT VERIFICATION FOR TOP 4) ---
+# --- STEP 2 HANDLER (STRICT VERIFICATION FOR 5 CHANNELS) ---
 @dp.callback_query(F.data == "goto_step2")
 async def process_step2(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     not_joined = []
 
-    for ch in TOP_4_CHANNELS:
+    for ch in TOP_5_CHANNELS:
         is_joined = await check_user_joined(user_id, ch["id"])
         if not is_joined:
             not_joined.append(ch["name"])
@@ -152,7 +155,7 @@ async def process_step2(callback: types.CallbackQuery):
     # Agar banda join/request nahi kiya:
     if not_joined:
         await callback.answer(
-            f"❌ Access Denied!\nAapne {len(not_joined)} channels join/request nahi kiye.\nPehle upar ke 4 channels join karein!",
+            f"❌ Access Denied!\nAapne {len(not_joined)} channels join/request nahi kiye.\nPehle upar ke 5 channels join karein!",
             show_alert=True
         )
         return
@@ -160,7 +163,7 @@ async def process_step2(callback: types.CallbackQuery):
     await callback.answer("✅ Step 1 Verified!")
     
     step2_caption = (
-        "🔥 **STEP 1 COMPLETED (4/4 CHANNELS JOINED)!**\n\n"
+        "🔥 **STEP 1 COMPLETED (5/5 CHANNELS JOINED)!**\n\n"
         "⏳ **Aapka Voucher 90% Unlock Ho Chuka Hai.**\n\n"
         "Sirf aakhri 3 channels bache hain! Niche join/request daal kar turant apna **Voucher & Promo Code** claim karein:\n\n"
         "👇 *Niche diye gaye channels join karein:*"
@@ -179,7 +182,7 @@ async def process_step2(callback: types.CallbackQuery):
             parse_mode="Markdown"
         )
 
-# --- FINAL CLAIM HANDLER (STRICT VERIFICATION FOR 5, 6, 7) ---
+# --- FINAL CLAIM HANDLER (STRICT VERIFICATION FOR 6, 7, 8) ---
 @dp.callback_query(F.data == "claim_voucher")
 async def process_claim(callback: types.CallbackQuery):
     user_id = callback.from_user.id
@@ -205,7 +208,7 @@ async def process_claim(callback: types.CallbackQuery):
     except Exception:
         pass
 
-    # Naya fresh message with intense FOMO
+    # Naya fresh message
     reward_text = (
         "🎁 **HERE IS YOUR VOUCHER & PROMO CODE!** 🎁\n\n"
         "⚡ **Official VIP Promo Code & Free Cash Voucher agle 10 MINUTES me niche diye gaye VIP Channel me drop hone wala hai!**\n\n"
