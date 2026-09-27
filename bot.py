@@ -10,8 +10,8 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFil
 # ==================== CONFIGURATION ====================
 BOT_TOKEN = "8772775679:AAFNhAS8fAflvpa6qk0hQQ0GHXmGAfNkr6E"
 
-# Fallback Banner Image (Agar aapne banner.jpg upload na ki ho)
-DEFAULT_PHOTO_URL = "https://i.postimg.cc/cLGk97Zw/YONO-LOOT-640x360.png"
+# Fallback Banner Image (Agar banner.jpg upload na ho)
+DEFAULT_PHOTO_URL = "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800"
 
 # --- STEP 1: TOP 4 CHANNELS (2x2 Grid) ---
 TOP_4_CHANNELS = [
@@ -40,7 +40,6 @@ dp = Dispatcher(storage=MemoryStorage())
 # --- 2x2 GRID KEYBOARDS ---
 
 def get_step1_keyboard():
-    # 2x2 Grid layout (Jaise 2nd screenshot me tha)
     keyboard = [
         [
             InlineKeyboardButton(text=TOP_4_CHANNELS[0]["name"], url=TOP_4_CHANNELS[0]["url"]),
@@ -66,18 +65,7 @@ def get_step2_keyboard():
             InlineKeyboardButton(text=REMAINING_CHANNELS[2]["name"], url=REMAINING_CHANNELS[2]["url"])
         ],
         [
-            InlineKeyboardButton(text="🎁 Claim Voucher & Promo Code 🎁", callback_data="claim_voucher")
-        ]
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=keyboard)
-
-def get_final_keyboard():
-    keyboard = [
-        [
-            InlineKeyboardButton(text="🚀 Click Here To Collect Voucher 🚀", url=FINAL_8TH_LINK)
-        ],
-        [
-            InlineKeyboardButton(text="🔄 Claim Another Code", callback_data="restart_flow")
+            InlineKeyboardButton(text="🎁 Get Voucher & Promo Code 🎁", callback_data="claim_voucher")
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -127,7 +115,7 @@ async def process_step2(callback: types.CallbackQuery):
     step2_caption = (
         "🔥 **STEP 1 COMPLETED (4/4 CHANNELS JOINED)!**\n\n"
         "⏳ **Aapka Voucher 90% Unlock Ho Chuka Hai.**\n\n"
-        "Sirf aakhri kuch channels bache hain! Niche join/request daal kar turant apna **₹185 - ₹500 Free Voucher** claim karein:\n\n"
+        "Sirf aakhri kuch channels bache hain! Niche join/request daal kar turant apna **Voucher & Promo Code** claim karein:\n\n"
         "👇 *Niche diye gaye channels join karein:*"
     )
 
@@ -144,7 +132,7 @@ async def process_step2(callback: types.CallbackQuery):
             parse_mode="Markdown"
         )
 
-# --- FINAL VOUCHER CLAIM HANDLER ---
+# --- FINAL VOUCHER CLAIM HANDLER (PURANA MSG DELETE + NAYA FRESH MSG) ---
 @dp.callback_query(F.data == "claim_voucher")
 async def process_claim(callback: types.CallbackQuery):
     user_id = callback.from_user.id
@@ -162,42 +150,38 @@ async def process_claim(callback: types.CallbackQuery):
 
     if not_joined:
         await callback.answer(
-            f"⚠️ Pehle Channel 5 & 6 join karein tabhi voucher milega!",
+            f"⚠️ Pehle Channel 5 & 6 join karein tabhi voucher unlock hoga!",
             show_alert=True
         )
         return
 
-    await callback.answer("🎉 Congratulations! Voucher Unlocked!")
+    await callback.answer("🎉 Verification Successful!")
 
-    reward_caption = (
-        "🎊 **CONGRATS! REDEMPTION SUCCESSFUL!**\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━\n"
-        "🎟️ **Promo Code:** `YONO-DIWA-FREE500`\n"
-        "💰 **Cash Won:** **₹185.40 Free Spins / Bonus**\n"
-        "⏳ **Expiry:** 10 Minutes Only (Active)\n"
-        "━━━━━━━━━━━━━━━━━━━━━\n\n"
-        "⚠️ **Voucher Collect Kaise Karein?**\n"
-        "Niche diye gaye **'Click Here To Collect Voucher'** button par tap karke request daalein aur apna code direct game me use karein!\n\n"
-        "👇 **Click The Green/Redeem Button Below:**"
+    # 1. Purana photo wala message delete karo
+    try:
+        await callback.message.delete()
+    except Exception as e:
+        logging.error(f"Message delete error: {e}")
+
+    # 2. Naya fresh message bhejo bina kisi fake code ke
+    reward_text = (
+        "🎁 **HERE IS YOUR VOUCHER & PROMO CODE!** 🎁\n\n"
+        "⚡ **Official VIP Promo Code & Free Cash Voucher agle 10 MINUTES me niche diye gaye VIP Channel me drop hone wala hai!**\n\n"
+        "⚠️ **Fast Join:** Ye code sirf **First 500 Active Users** ke liye valid hoga. Jaldi se niche click karke Join Request daalein taaki code aate hi aap claim kar sakein!\n\n"
+        "👇 **Click Below & Send Join Request Now:**"
     )
 
-    try:
-        await callback.message.edit_caption(
-            caption=reward_caption,
-            reply_markup=get_final_keyboard(),
-            parse_mode="Markdown"
-        )
-    except Exception:
-        await callback.message.edit_text(
-            reward_caption,
-            reply_markup=get_final_keyboard(),
-            parse_mode="Markdown"
-        )
+    final_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🚀 FAST JOIN VIP CHANNEL (CODE IN 10M) 🚀", url=FINAL_8TH_LINK)
+        ]
+    ])
 
-@dp.callback_query(F.data == "restart_flow")
-async def restart_callback(callback: types.CallbackQuery):
-    await callback.message.delete()
-    await cmd_start(callback.message)
+    await callback.message.answer(
+        text=reward_text,
+        reply_markup=final_keyboard,
+        parse_mode="Markdown"
+    )
 
 # Render Keep-Alive Server
 async def handle_ping(request):
